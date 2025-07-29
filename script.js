@@ -270,7 +270,7 @@ window.addEventListener('click', (event) => {
     }
 });
 
-// --- 初期化処理 ---
+// --- Initialization Process ---
 function initializeApp() {
     loadData();
     checkStreakOnLoad(); // ページ読み込み時にストリークをチェック
