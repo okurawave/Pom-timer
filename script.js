@@ -129,9 +129,10 @@ function loadData() {
 
         goalInput.value = dailyGoal;
         updateProgressDisplay();
-        resetTimer(); // データロード後にタイマーをリセットして表示に反映
     }).catch(err => {
         console.error("Error loading data from localForage", err);
+    }).finally(() => {
+        resetTimer(); // Ensure timer is reset regardless of Promise outcome
         // Fallback to default values
         stats = stats || {};
         userAchievements = {};
