@@ -130,7 +130,8 @@ function resetTimer() {
 }
 
 goalInput.addEventListener('change', () => {
-    dailyGoal = goalInput.value;
+    const parsedGoal = parseInt(goalInput.value, 10);
+    dailyGoal = isNaN(parsedGoal) ? 0 : parsedGoal; // Default to 0 if input is invalid
     updateProgressDisplay();
     saveSettings();
 });
