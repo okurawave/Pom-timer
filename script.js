@@ -10,7 +10,7 @@ const closeBtn = document.querySelector('.close-btn');
 const achievementsGrid = document.getElementById('achievements-grid');
 
 
-// --- 実績データ ---
+// --- Achievement Data ---
 const achievements = [
     { id: 'first_step', name: 'First Step', description: '初めてのポモドーロを完了する', icon: 'icon_first_step.png', unlocked: false },
     { id: 'pomodoro_beginner', name: 'Pomodoro Beginner', description: '10回のポモドーロを完了する', icon: 'icon_pomodoro_beginner.png', unlocked: false },
