@@ -315,7 +315,6 @@ function checkAchievements() {
     // Monthly check
     if (!userAchievements['monthly_goal_achiever']) {
         let monthlyCount = 0;
-        const todayDate = new Date();
         const startOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
 
         for (let d = new Date(startOfMonth); d <= todayDate; d.setDate(d.getDate() + 1)) {
