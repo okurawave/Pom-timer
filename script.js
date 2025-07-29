@@ -103,5 +103,13 @@ updateDisplay();
 
 // Request notification permission on page load
 if (Notification.permission !== 'granted') {
-    Notification.requestPermission();
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            console.log('Notification permission granted.');
+        } else if (permission === 'denied') {
+            console.warn('Notification permission denied. Notifications will not be available.');
+        }
+    }).catch(error => {
+        console.error('Error requesting notification permission:', error);
+    });
 }
