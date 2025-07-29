@@ -49,6 +49,29 @@ const soundBtn = document.getElementById('sound-btn');
 const soundSelector = document.getElementById('sound-selector');
 const soundOptions = document.querySelectorAll('.sound-option');
 const stopSoundBtn = document.getElementById('stop-sound-btn');
+const toastContainer = document.getElementById('toast-container');
+
+// --- Toast Notification ---
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.classList.add('toast');
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+
+    // Animate out and remove
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => {
+            toast.remove();
+        });
+    }, 3000); // Show for 3 seconds
+}
+
 
 // Default Settings
 const DEFAULT_SETTINGS = {
@@ -89,40 +112,45 @@ const myConfetti = confetti.create(confettiCanvas, {
     useWorker: true
 });
 
-// localStorageからデータを読み込む
+// localForageからデータを読み込む
 function loadData() {
-    const savedStats = localStorage.getItem(STATS_KEY);
-    if (savedStats) {
-        stats = JSON.parse(savedStats);
-    }
-    const savedAchievements = localStorage.getItem(ACHIEVEMENTS_KEY);
-    if (savedAchievements) {
-        userAchievements = JSON.parse(savedAchievements);
-    }
-    const savedSettings = localStorage.getItem(SETTINGS_KEY);
-    if (savedSettings) {
-        settings = JSON.parse(savedSettings);
-    }
-    dailyGoal = parseInt(localStorage.getItem('dailyGoal')) || 8;
-    completedPomodoros = parseInt(localStorage.getItem('completedPomodoros')) || 0;
-    goalInput.value = dailyGoal;
-    updateProgressDisplay();
+    Promise.all([
+        localforage.getItem(STATS_KEY),
+        localforage.getItem(ACHIEVEMENTS_KEY),
+        localforage.getItem(SETTINGS_KEY),
+        localforage.getItem('dailyGoal'),
+        localforage.getItem('completedPomodoros')
+    ]).then(values => {
+        stats = values[0] || stats;
+        userAchievements = values[1] || {};
+        settings = values[2] || { ...DEFAULT_SETTINGS };
+        dailyGoal = values[3] || 8;
+        completedPomodoros = values[4] || 0;
+
+        goalInput.value = dailyGoal;
+        updateProgressDisplay();
+        resetTimer(); // データロード後にタイマーをリセットして表示に反映
+    }).catch(err => {
+        console.error("Error loading data from localForage", err);
+    });
 }
 
-// localStorageにデータを保存する
+// localForageにデータを保存する
 function saveData() {
-    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(userAchievements));
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    localStorage.setItem('dailyGoal', dailyGoal);
-    localStorage.setItem('completedPomodoros', completedPomodoros);
+    localforage.setItem(STATS_KEY, stats);
+    localforage.setItem(ACHIEVEMENTS_KEY, userAchievements);
+    localforage.setItem(SETTINGS_KEY, settings);
+    localforage.setItem('dailyGoal', dailyGoal);
+    localforage.setItem('completedPomodoros', completedPomodoros);
 }
 
 function updatePomodoroHistory() {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
-    history[today] = (history[today] || 0) + 1;
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    localforage.getItem(HISTORY_KEY).then(history => {
+        history = history || {};
+        history[today] = (history[today] || 0) + 1;
+        localforage.setItem(HISTORY_KEY, history);
+    });
 }
 
 function updateProgressDisplay() {
@@ -139,9 +167,10 @@ function celebrate() {
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
-    applyTheme(localStorage.getItem('theme') || 'light');
+    localforage.getItem('theme').then(theme => {
+        applyTheme(theme || 'light');
+    });
     loadSoundSettings();
-    resetTimer();
     checkStreakOnLoad();
 });
 
@@ -229,12 +258,10 @@ function populateAchievementsGrid() {
 
 function checkAchievements() {
     const now = new Date();
-    let newAchievementUnlocked = false;
 
     // 1. 初回ポモドーロ
     if (!userAchievements['first_step']) {
-        unlockAchievement('first_step');
-        newAchievementUnlocked = true;
+        unlockAchievement('first_step', 'First Step');
     }
 
     // 2. 累計ポモドーロ
@@ -245,8 +272,7 @@ function checkAchievements() {
     ];
     pomodoroMilestones.forEach(m => {
         if (stats.totalPomodoros >= m.count && !userAchievements[m.id]) {
-            unlockAchievement(m.id);
-            newAchievementUnlocked = true;
+            unlockAchievement(m.id, m.name);
         }
     });
 
@@ -272,8 +298,7 @@ function checkAchievements() {
     ];
     streakMilestones.forEach(m => {
         if (stats.streak >= m.days && !userAchievements[m.id]) {
-            unlockAchievement(m.id);
-            newAchievementUnlocked = true;
+            unlockAchievement(m.id, m.name);
         }
     });
 
@@ -281,68 +306,60 @@ function checkAchievements() {
     // 4. 週末利用
     const dayOfWeek = now.getDay(); // 0 (Sunday) or 6 (Saturday)
     if ((dayOfWeek === 0 || dayOfWeek === 6) && !userAchievements['weekend_warrior']) {
-        unlockAchievement('weekend_warrior');
-        newAchievementUnlocked = true;
+        unlockAchievement('weekend_warrior', 'Weekend Warrior');
     }
 
     // 5. 深夜利用
     const hour = now.getHours();
     if ((hour >= 22 || hour < 5) && !userAchievements['night_owl']) {
-        unlockAchievement('night_owl');
-        newAchievementUnlocked = true;
+        unlockAchievement('night_owl', 'Night Owl');
     }
 
     // 6. Weekly/Monthly Goal Achiever
-    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
+    localforage.getItem(HISTORY_KEY).then(history => {
+        history = history || {};
 
-    // Weekly check (Monday as start of week)
-    if (!userAchievements['weekly_goal_achiever']) {
-        let weeklyCount = 0;
-        const dayOfWeek = now.getDay(); // 0-6 (Sun-Sat)
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Adjust to Monday
-        startOfWeek.setHours(0, 0, 0, 0);
+        // Weekly check (Monday as start of week)
+        if (!userAchievements['weekly_goal_achiever']) {
+            let weeklyCount = 0;
+            const dayOfWeek = now.getDay(); // 0-6 (Sun-Sat)
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Adjust to Monday
+            startOfWeek.setHours(0, 0, 0, 0);
 
-        for (let d = new Date(startOfWeek); d <= now; d.setDate(d.getDate() + 1)) {
-            const dateStr = d.toISOString().split('T')[0];
-            weeklyCount += history[dateStr] || 0;
+            for (let d = new Date(startOfWeek); d <= now; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                weeklyCount += history[dateStr] || 0;
+            }
+
+            if (weeklyCount >= 35) {
+                unlockAchievement('weekly_goal_achiever', 'Weekly Goal Achiever');
+            }
         }
 
-        if (weeklyCount >= 35) {
-            unlockAchievement('weekly_goal_achiever');
-            newAchievementUnlocked = true;
+        // Monthly check
+        if (!userAchievements['monthly_goal_achiever']) {
+            let monthlyCount = 0;
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            for (let d = new Date(startOfMonth); d <= now; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                monthlyCount += history[dateStr] || 0;
+            }
+
+            if (monthlyCount >= 150) {
+                unlockAchievement('monthly_goal_achiever', 'Monthly Goal Achiever');
+            }
         }
-    }
-
-    // Monthly check
-    if (!userAchievements['monthly_goal_achiever']) {
-        let monthlyCount = 0;
-        const startOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
-
-        for (let d = new Date(startOfMonth); d <= todayDate; d.setDate(d.getDate() + 1)) {
-            const dateStr = d.toISOString().split('T')[0];
-            monthlyCount += history[dateStr] || 0;
-        }
-
-        if (monthlyCount >= 150) {
-            unlockAchievement('monthly_goal_achiever');
-            newAchievementUnlocked = true;
-        }
-    }
-
-
-    if (newAchievementUnlocked) {
-        // TODO: 実績解除の通知を出す (e.g., a small popup)
-        console.log("新しい実績を解除しました！");
-    }
+    });
 
     saveData(); // 変更を保存
 }
 
-function unlockAchievement(id) {
+function unlockAchievement(id, name) {
     if (!userAchievements[id]) {
         userAchievements[id] = new Date().toISOString();
-        console.log(`Unlocked: ${id}`);
+        showToast(`実績解除: ${name}`);
     }
 }
 
@@ -404,16 +421,17 @@ function saveSettings() {
 
 function resetDefaultSettings() {
     settings = { ...DEFAULT_SETTINGS };
-    localStorage.removeItem(SETTINGS_KEY);
-    closeModal();
-    resetTimer();
+    localforage.removeItem(SETTINGS_KEY).then(() => {
+        closeModal();
+        resetTimer();
+    });
 }
 
 // --- Theme Switcher ---
 function applyTheme(themeName) {
     document.body.className = '';
     document.body.classList.add(themeName);
-    localStorage.setItem('theme', themeName);
+    localforage.setItem('theme', themeName);
     themeSelector.style.display = 'none';
 }
 
@@ -430,9 +448,11 @@ function playSound(soundName) {
     }
     const sound = document.getElementById(`${soundName}-sound`);
     if (sound) {
-        sound.volume = parseFloat(localStorage.getItem(`${soundName}Volume`)) || 0.5;
-        sound.play();
-        currentSound = sound;
+        localforage.getItem(`${soundName}Volume`).then(volume => {
+            sound.volume = parseFloat(volume) || 0.5;
+            sound.play();
+            currentSound = sound;
+        });
     }
 }
 
@@ -451,18 +471,19 @@ function setVolume(soundName, volume) {
     if (sound) {
         sound.volume = volume;
     }
-    localStorage.setItem(`${soundName}Volume`, volume);
+    localforage.setItem(`${soundName}Volume`, volume);
 }
 
 function loadSoundSettings() {
     soundOptions.forEach(option => {
         const soundName = option.dataset.sound;
-        const savedVolume = localStorage.getItem(`${soundName}Volume`);
-        if (savedVolume) {
-            option.querySelector('.volume-slider').value = savedVolume;
-        } else {
-            option.querySelector('.volume-slider').value = 0.5;
-        }
+        localforage.getItem(`${soundName}Volume`).then(savedVolume => {
+            if (savedVolume) {
+                option.querySelector('.volume-slider').value = savedVolume;
+            } else {
+                option.querySelector('.volume-slider').value = 0.5;
+            }
+        });
     });
 }
 
@@ -525,9 +546,11 @@ function initializeApp() {
 }
 
 function populateStats() {
-    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
-    generateHeatmap(history);
-    generateBarGraph(history);
+    localforage.getItem(HISTORY_KEY).then(history => {
+        history = history || {};
+        generateHeatmap(history);
+        generateBarGraph(history);
+    });
 }
 
 function generateHeatmap(history) {
@@ -679,7 +702,7 @@ window.addEventListener('click', (event) => {
 if (Notification.permission !== 'granted') {
     Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
-            console.log('Notification permission granted.');
+            // console.log('Notification permission granted.');
         }
     });
 }
