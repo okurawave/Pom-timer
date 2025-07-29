@@ -48,7 +48,8 @@ function startTimer() {
         if (timeLeft <= 0) {
             clearInterval(timer);
             switchMode();
-            startTimer(); // Automatically start the next timer
+            startStopBtn.textContent = '次のサイクルを開始'; // Notify user to start the next cycle
+            isRunning = false; // Ensure the timer is stopped
         }
     }, 1000);
 }
