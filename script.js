@@ -2,6 +2,7 @@ const timeDisplay = document.getElementById('time-display');
 const startStopBtn = document.getElementById('start-stop');
 const resetBtn = document.getElementById('reset');
 const modeDisplay = document.getElementById('mode');
+const cycleCountDisplay = document.getElementById('cycle-count');
 
 const WORK_TIME = 25 * 60;
 const SHORT_BREAK_TIME = 5 * 60;
@@ -20,23 +21,39 @@ function updateDisplay() {
 }
 
 function switchMode() {
+    const audio = new Audio('notification.wav');
+    audio.play();
+
+    let notificationTitle;
+    let notificationBody;
+
     if (currentMode === 'work') {
         workCycle++;
+        cycleCountDisplay.textContent = `サイクル: ${workCycle % 4 || 4}/4`;
         if (workCycle % 4 === 0) {
             currentMode = 'longBreak';
             timeLeft = LONG_BREAK_TIME;
             modeDisplay.textContent = '長い休憩';
+            notificationTitle = 'お疲れ様でした！';
+            notificationBody = '長い休憩を開始します。';
         } else {
             currentMode = 'shortBreak';
             timeLeft = SHORT_BREAK_TIME;
             modeDisplay.textContent = '短い休憩';
+            notificationTitle = '作業終了！';
+            notificationBody = '短い休憩を開始します。';
         }
     } else {
         currentMode = 'work';
         timeLeft = WORK_TIME;
         modeDisplay.textContent = '作業モード';
+        notificationTitle = '休憩終了';
+        notificationBody = '作業を再開します。';
     }
-    updateDisplay();
+
+    if (Notification.permission === 'granted') {
+        new Notification(notificationTitle, { body: notificationBody });
+    }
 }
 
 function startTimer() {
@@ -48,8 +65,7 @@ function startTimer() {
         if (timeLeft <= 0) {
             clearInterval(timer);
             switchMode();
-            startStopBtn.textContent = '次のサイクルを開始'; // Notify user to start the next cycle
-            isRunning = false; // Ensure the timer is stopped
+            startTimer(); // Immediately start the next timer
         }
     }, 1000);
 }
@@ -69,6 +85,8 @@ function resetTimer() {
     } else {
         timeLeft = LONG_BREAK_TIME;
     }
+    workCycle = 0;
+    cycleCountDisplay.textContent = `サイクル: 0/4`;
     updateDisplay();
 }
 
@@ -83,3 +101,8 @@ startStopBtn.addEventListener('click', () => {
 resetBtn.addEventListener('click', resetTimer);
 
 updateDisplay();
+
+// Request notification permission on page load
+if (Notification.permission !== 'granted') {
+    Notification.requestPermission();
+}
