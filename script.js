@@ -5,29 +5,8 @@ const resetBtn = document.getElementById('reset');
 const modeDisplay = document.getElementById('mode');
 const cycleCountDisplay = document.getElementById('cycle-count');
 const progressCircle = document.querySelector('.progress-ring__circle');
-let radius, circumference;
-if (progressCircle) {
-    radius = progressCircle.r.baseVal.value;
-    circumference = radius * 2 * Math.PI;
-    progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
-    progressCircle.style.strokeDashoffset = circumference;
-} else {
-    console.warn('Progress circle element not found. Skipping related functionality.');
-}
-
-function setProgress(percent) {
-  if (progressCircle) {
-      const offset = circumference - percent / 100 * circumference;
-      progressCircle.style.strokeDashoffset = offset;
-  } else {
-      console.warn('Cannot set progress: Progress circle element is not available.');
-  }
-}
-
-const notificationAudio = new Audio('notification.wav');
 const achievementsBtn = document.getElementById('achievements-btn');
 const achievementsModal = document.getElementById('achievements-modal');
-const closeBtn = document.querySelector('.close-btn');
 const achievementsGrid = document.getElementById('achievements-grid');
 
 
@@ -42,14 +21,13 @@ const achievements = [
     { id: 'weekend_warrior', name: 'Weekend Warrior', description: '週末（土日）にポモドーロを完了する', icon: 'icon_weekend_warrior.png', unlocked: false },
     { id: 'night_owl', name: 'Night Owl', description: '深夜（22:00～5:00）にポモドーロを完了する', icon: 'icon_night_owl.png', unlocked: false },
 ];
-// --------------------
 const goalInput = document.getElementById('goal-input');
 const progressDisplay = document.getElementById('progress-display');
 const confettiCanvas = document.getElementById('confetti-canvas');
 const taskInput = document.getElementById('task-input');
 const settingsBtn = document.getElementById('settings-btn');
 const modal = document.getElementById('settings-modal');
-const closeBtn = document.querySelector('.close-btn');
+const closeBtns = document.querySelectorAll('.close-btn');
 const saveSettingsBtn = document.getElementById('save-settings');
 const resetDefaultsBtn = document.getElementById('reset-defaults');
 const workTimeInput = document.getElementById('work-time-input');
@@ -79,11 +57,14 @@ let timeLeft;
 let isRunning = false;
 let currentMode = 'work'; // work, shortBreak, longBreak
 let workCycle = 0;
-
+let dailyGoal = 8;
+let completedPomodoros = 0;
+let currentSound = null;
 
 // --- localStorage Keys ---
 const STATS_KEY = 'pomodoro_stats';
 const ACHIEVEMENTS_KEY = 'pomodoro_achievements';
+const SETTINGS_KEY = 'timerSettings';
 
 // --- Data Management ---
 let stats = {
@@ -91,8 +72,13 @@ let stats = {
     lastSessionDate: null,
     streak: 0,
 };
-
 let userAchievements = {}; // { achievementId: unlockedDate }
+
+const notificationAudio = new Audio('notification.wav');
+const myConfetti = confetti.create(confettiCanvas, {
+    resize: true,
+    useWorker: true
+});
 
 // localStorageからデータを読み込む
 function loadData() {
@@ -104,32 +90,21 @@ function loadData() {
     if (savedAchievements) {
         userAchievements = JSON.parse(savedAchievements);
     }
-}
-
-// localStorageにデータを保存する
-function saveData() {
-    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(userAchievements));
-}
-
-
-let dailyGoal = 8;
-let completedPomodoros = 0;
-const notificationAudio = new Audio('notification.wav');
-
-const myConfetti = confetti.create(confettiCanvas, {
-    resize: true,
-    useWorker: true
-});
-
-function loadSettings() {
+    const savedSettings = localStorage.getItem(SETTINGS_KEY);
+    if (savedSettings) {
+        settings = JSON.parse(savedSettings);
+    }
     dailyGoal = parseInt(localStorage.getItem('dailyGoal')) || 8;
     completedPomodoros = parseInt(localStorage.getItem('completedPomodoros')) || 0;
     goalInput.value = dailyGoal;
     updateProgressDisplay();
 }
 
-function saveSettings() {
+// localStorageにデータを保存する
+function saveData() {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(userAchievements));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     localStorage.setItem('dailyGoal', dailyGoal);
     localStorage.setItem('completedPomodoros', completedPomodoros);
 }
@@ -144,18 +119,15 @@ function celebrate() {
         spread: 180
     });
 }
-let currentSound = null;
-
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    loadSettings();
+    loadData();
     applyTheme(localStorage.getItem('theme') || 'light');
     loadSoundSettings();
     resetTimer();
+    checkStreakOnLoad();
 });
-
-
 
 function updateDisplay() {
     const minutes = Math.floor(timeLeft / 60);
@@ -164,11 +136,11 @@ function updateDisplay() {
 
     let totalTime;
     if (currentMode === 'work') {
-        totalTime = WORK_TIME;
+        totalTime = settings.workTime * 60;
     } else if (currentMode === 'shortBreak') {
-        totalTime = SHORT_BREAK_TIME;
+        totalTime = settings.shortBreakTime * 60;
     } else {
-        totalTime = LONG_BREAK_TIME;
+        totalTime = settings.longBreakTime * 60;
     }
     const percent = ((totalTime - timeLeft) / totalTime) * 100;
     setProgress(percent);
@@ -176,33 +148,24 @@ function updateDisplay() {
 
 // --- Timer Logic ---
 function switchMode() {
-    // notificationAudio.play(); // This will be handled by the browser notification
+    notificationAudio.play();
     let notificationTitle;
     let notificationBody;
 
     if (currentMode === 'work') {
         workCycle++;
-
         completedPomodoros++;
+        stats.totalPomodoros++;
         updateProgressDisplay();
-        saveSettings();
+        checkAchievements();
+        saveData();
 
         if (parseInt(completedPomodoros) === parseInt(dailyGoal)) {
             celebrate();
         }
 
-        cycleCountDisplay.textContent = `サイクル: ${workCycle % 4 || 4}/4`;
-
-        // ポモドーロ完了時に統計を更新し、実績をチェック
-        stats.totalPomodoros++;
-        checkAchievements();
-
-
-        if (workCycle % 4 === 0) {
-
         cycleCountDisplay.textContent = `サイクル: ${workCycle % settings.cycles || settings.cycles}/${settings.cycles}`;
         if (workCycle > 0 && workCycle % settings.cycles === 0) {
-
             currentMode = 'longBreak';
             timeLeft = settings.longBreakTime * 60;
             modeDisplay.textContent = '長い休憩';
@@ -351,24 +314,6 @@ function stopTimer() {
 
 function resetTimer() {
     stopTimer();
-    if (currentMode === 'work') {
-        timeLeft = WORK_TIME;
-    } else if (currentMode === 'shortBreak') {
-        timeLeft = SHORT_BREAK_TIME;
-    } else {
-        timeLeft = LONG_BREAK_TIME;
-    }
-    updateDisplay();
-}
-
-goalInput.addEventListener('change', () => {
-    const parsedGoal = parseInt(goalInput.value, 10);
-    dailyGoal = isNaN(parsedGoal) ? 0 : parsedGoal; // Default to 0 if input is invalid
-    updateProgressDisplay();
-    saveSettings();
-});
-
-
     currentMode = 'work';
     workCycle = 0;
     timeLeft = settings.workTime * 60;
@@ -397,23 +342,16 @@ function saveSettings() {
     settings.longBreakTime = parseInt(longBreakInput.value, 10);
     settings.cycles = parseInt(cycleInput.value, 10);
 
-    localStorage.setItem('timerSettings', JSON.stringify(settings));
+    saveData();
     closeModal();
     resetTimer();
 }
 
 function resetDefaultSettings() {
     settings = { ...DEFAULT_SETTINGS };
-    localStorage.removeItem('timerSettings');
+    localStorage.removeItem(SETTINGS_KEY);
     closeModal();
     resetTimer();
-}
-
-function loadSettings() {
-    const savedSettings = localStorage.getItem('timerSettings');
-    if (savedSettings) {
-        settings = JSON.parse(savedSettings);
-    }
 }
 
 // --- Theme Switcher ---
@@ -480,7 +418,6 @@ function toggleSoundSelector() {
 
 
 // --- Event Listeners ---
-
 startStopBtn.addEventListener('click', () => {
     if (isRunning) {
         stopTimer();
@@ -491,29 +428,28 @@ startStopBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', resetTimer);
 settingsBtn.addEventListener('click', openModal);
-closeBtn.addEventListener('click', closeModal);
 saveSettingsBtn.addEventListener('click', saveSettings);
 resetDefaultsBtn.addEventListener('click', resetDefaultSettings);
 themeBtn.addEventListener('click', toggleThemeSelector);
 soundBtn.addEventListener('click', toggleSoundSelector);
 stopSoundBtn.addEventListener('click', stopAllSounds);
 
+goalInput.addEventListener('change', () => {
+    const parsedGoal = parseInt(goalInput.value, 10);
+    dailyGoal = isNaN(parsedGoal) ? 0 : parsedGoal;
+    updateProgressDisplay();
+    saveData();
+});
 
-// --- Modal Control ---
 achievementsBtn.addEventListener('click', () => {
     populateAchievementsGrid();
     achievementsModal.style.display = 'block';
 });
 
-closeBtn.addEventListener('click', () => {
+closeBtns.forEach(btn => btn.addEventListener('click', () => {
     achievementsModal.style.display = 'none';
-});
-
-window.addEventListener('click', (event) => {
-    if (event.target == achievementsModal) {
-        achievementsModal.style.display = 'none';
-    }
-});
+    modal.style.display = 'none';
+}));
 
 // --- Initialization Process ---
 function initializeApp() {
@@ -540,11 +476,6 @@ function checkStreakOnLoad() {
 }
 
 initializeApp();
-
-
-// Load settings on page load
-loadSettings();
-updateDisplay();
 
 
 // Request notification permission on page load
