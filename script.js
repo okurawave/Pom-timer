@@ -37,7 +37,7 @@ let workCycle = 0;
 const STATS_KEY = 'pomodoro_stats';
 const ACHIEVEMENTS_KEY = 'pomodoro_achievements';
 
-// --- データ管理 ---
+// --- Data Management ---
 let stats = {
     totalPomodoros: 0,
     lastSessionDate: null,
