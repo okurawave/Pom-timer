@@ -112,7 +112,7 @@ function switchMode() {
     }
 }
 
-// --- 実績関連の関数 ---
+// --- Achievement Related Functions ---
 function populateAchievementsGrid() {
     achievementsGrid.innerHTML = ''; // Clear existing grid
     achievements.forEach(ach => {
