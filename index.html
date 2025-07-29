@@ -9,21 +9,6 @@
 <body>
     <div class="container">
         <div class="header">
-            <div>
-                <p id="mode">作業モード</p>
-                <p id="cycle-count">サイクル: 0/4</p>
-            </div>
-            <button id="achievements-btn">🏆</button>
-
-            <p id="mode">作業モード</p>
-            <p id="cycle-count">サイクル: 0/4</p>
-            <div class="daily-goal">
-                <label for="goal-input">今日の目標:</label>
-                <input type="number" id="goal-input" min="1" value="8">
-                <p id="progress-display">0/8</p>
-            </div>
-
-            <input type="text" id="task-input" placeholder="タスク名を入力">
             <div class="left-controls">
                 <button id="theme-btn">🎨</button>
                 <button id="sound-btn">🎵</button>
@@ -33,8 +18,14 @@
                 <p id="cycle-count">サイクル: 0/4</p>
             </div>
             <div class="right-controls">
+                <button id="achievements-btn">🏆</button>
                 <button id="settings-btn">⚙️</button>
             </div>
+        </div>
+        <div class="daily-goal">
+            <label for="goal-input">今日の目標:</label>
+            <input type="number" id="goal-input" min="1" value="8">
+            <p id="progress-display">0/8</p>
         </div>
         <input type="text" id="task-input" placeholder="タスク名を入力">
         <div class="timer">
@@ -56,6 +47,10 @@
             <h2>実績一覧</h2>
             <div id="achievements-grid">
                 <!-- Achievements will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <canvas id="confetti-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
