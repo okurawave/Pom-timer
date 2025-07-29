@@ -5,6 +5,10 @@ const resetBtn = document.getElementById('reset');
 const modeDisplay = document.getElementById('mode');
 const cycleCountDisplay = document.getElementById('cycle-count');
 const progressCircle = document.querySelector('.progress-ring__circle');
+const statsBtn = document.getElementById('stats-btn');
+const statsModal = document.getElementById('stats-modal');
+const heatmapContainer = document.getElementById('heatmap-container');
+const bargraphContainer = document.getElementById('bargraph-container');
 const achievementsBtn = document.getElementById('achievements-btn');
 const achievementsModal = document.getElementById('achievements-modal');
 const achievementsGrid = document.getElementById('achievements-grid');
@@ -20,6 +24,8 @@ const achievements = [
     { id: '7_day_streak', name: '7-Day Streak', description: '7日間継続して利用する', icon: 'icon_7_day_streak.png', unlocked: false },
     { id: 'weekend_warrior', name: 'Weekend Warrior', description: '週末（土日）にポモドーロを完了する', icon: 'icon_weekend_warrior.png', unlocked: false },
     { id: 'night_owl', name: 'Night Owl', description: '深夜（22:00～5:00）にポモドーロを完了する', icon: 'icon_night_owl.png', unlocked: false },
+    { id: 'weekly_goal_achiever', name: 'Weekly Goal Achiever', description: '週間（月曜始まり）で35回のポモドーロを完了する', icon: 'icon_weekly_goal.png', unlocked: false },
+    { id: 'monthly_goal_achiever', name: 'Monthly Goal Achiever', description: '月間で150回のポモドーロを完了する', icon: 'icon_monthly_goal.png', unlocked: false },
 ];
 const goalInput = document.getElementById('goal-input');
 const progressDisplay = document.getElementById('progress-display');
@@ -65,6 +71,7 @@ let currentSound = null;
 const STATS_KEY = 'pomodoro_stats';
 const ACHIEVEMENTS_KEY = 'pomodoro_achievements';
 const SETTINGS_KEY = 'timerSettings';
+const HISTORY_KEY = 'pomodoro_history';
 
 // --- Data Management ---
 let stats = {
@@ -107,6 +114,13 @@ function saveData() {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     localStorage.setItem('dailyGoal', dailyGoal);
     localStorage.setItem('completedPomodoros', completedPomodoros);
+}
+
+function updatePomodoroHistory() {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
+    history[today] = (history[today] || 0) + 1;
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
 function updateProgressDisplay() {
@@ -156,6 +170,7 @@ function switchMode() {
         workCycle++;
         completedPomodoros++;
         stats.totalPomodoros++;
+        updatePomodoroHistory(); // Add this line
         updateProgressDisplay();
         checkAchievements();
         saveData();
@@ -273,6 +288,44 @@ function checkAchievements() {
     if ((hour >= 22 || hour < 5) && !userAchievements['night_owl']) {
         unlockAchievement('night_owl');
         newAchievementUnlocked = true;
+    }
+
+    // 6. Weekly/Monthly Goal Achiever
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
+
+    // Weekly check (Monday as start of week)
+    if (!userAchievements['weekly_goal_achiever']) {
+        let weeklyCount = 0;
+        const dayOfWeek = now.getDay(); // 0-6 (Sun-Sat)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Adjust to Monday
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        for (let d = new Date(startOfWeek); d <= now; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            weeklyCount += history[dateStr] || 0;
+        }
+
+        if (weeklyCount >= 35) {
+            unlockAchievement('weekly_goal_achiever');
+            newAchievementUnlocked = true;
+        }
+    }
+
+    // Monthly check
+    if (!userAchievements['monthly_goal_achiever']) {
+        let monthlyCount = 0;
+        const startOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+
+        for (let d = new Date(startOfMonth); d <= todayDate; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            monthlyCount += history[dateStr] || 0;
+        }
+
+        if (monthlyCount >= 150) {
+            unlockAchievement('monthly_goal_achiever');
+            newAchievementUnlocked = true;
+        }
     }
 
 
@@ -446,8 +499,14 @@ achievementsBtn.addEventListener('click', () => {
     achievementsModal.style.display = 'block';
 });
 
+statsBtn.addEventListener('click', () => {
+    populateStats();
+    statsModal.style.display = 'block';
+});
+
 closeBtns.forEach(btn => btn.addEventListener('click', () => {
     achievementsModal.style.display = 'none';
+    statsModal.style.display = 'none';
     modal.style.display = 'none';
 }));
 
@@ -456,6 +515,100 @@ function initializeApp() {
     loadData();
     checkStreakOnLoad(); // ページ読み込み時にストリークをチェック
     updateDisplay();
+}
+
+function populateStats() {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
+    generateHeatmap(history);
+    generateBarGraph(history);
+}
+
+function generateHeatmap(history) {
+    heatmapContainer.innerHTML = '';
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate());
+    const startDate = new Date(today);
+    startDate.setFullYear(today.getFullYear() - 1);
+
+    const dates = {};
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateString = d.toISOString().split('T')[0];
+        dates[dateString] = history[dateString] || 0;
+    }
+
+    const maxCount = Math.max(...Object.values(dates), 1);
+
+    const table = document.createElement('table');
+    const tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+
+    const SUNDAY = 0;
+    let currentDate = new Date(startDate);
+    // Adjust to start the week on Sunday
+    while (currentDate.getDay() !== SUNDAY) {
+        currentDate.setDate(currentDate.getDate() - 1);
+    }
+
+    for (let i = 0; i < MAX_WEEKS; i++) { // Max 53 weeks
+        const tr = document.createElement('tr');
+        for (let j = 0; j < DAYS_PER_WEEK; j++) {
+            const td = document.createElement('td');
+            const dateString = currentDate.toISOString().split('T')[0];
+
+            if (currentDate >= startDate && currentDate <= endDate) {
+                const count = dates[dateString] || 0;
+                const opacity = count > 0 ? MIN_OPACITY + (count / maxCount) * OPACITY_RANGE : EMPTY_OPACITY;
+                td.style.backgroundColor = `rgba(76, 175, 80, ${opacity})`;
+                td.title = `${dateString}: ${count} pomodoros`;
+            } else {
+                td.style.backgroundColor = '#ebedf0';
+            }
+            tr.appendChild(td);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        tbody.appendChild(tr);
+        if (currentDate > endDate) break;
+    }
+
+    heatmapContainer.appendChild(table);
+}
+
+function generateBarGraph(history) {
+    bargraphContainer.innerHTML = '';
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weeklyTotals = Array(DAYS_PER_WEEK).fill(0);
+    const weeklyCounts = Array(DAYS_PER_WEEK).fill(0);
+
+    for (const dateStr in history) {
+        const date = new Date(dateStr);
+        const dayOfWeek = date.getDay();
+        weeklyTotals[dayOfWeek] += history[dateStr];
+        weeklyCounts[dayOfWeek]++;
+    }
+
+    const weeklyAverages = weeklyTotals.map((total, i) => weeklyCounts[i] > 0 ? total / weeklyCounts[i] : 0);
+    const maxAverage = Math.max(...weeklyAverages, 1);
+
+    weeklyAverages.forEach((avg, i) => {
+        const barWrapper = document.createElement('div');
+        barWrapper.style.textAlign = 'center';
+
+        const bar = document.createElement('div');
+        const barHeight = (avg / maxAverage) * 100;
+        bar.style.height = `${barHeight}%`;
+        bar.style.width = '30px';
+        bar.style.backgroundColor = '#4caf50';
+        bar.style.display = 'inline-block';
+        bar.title = `Average: ${avg.toFixed(1)}`;
+
+        const label = document.createElement('p');
+        label.textContent = dayNames[i];
+
+        barWrapper.appendChild(bar);
+        barWrapper.appendChild(label);
+        bargraphContainer.appendChild(barWrapper);
+    });
 }
 
 function checkStreakOnLoad() {
