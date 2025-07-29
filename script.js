@@ -12,6 +12,8 @@ const bargraphContainer = document.getElementById('bargraph-container');
 const achievementsBtn = document.getElementById('achievements-btn');
 const achievementsModal = document.getElementById('achievements-modal');
 const achievementsGrid = document.getElementById('achievements-grid');
+const installGuideBtn = document.getElementById('install-guide-btn');
+const installGuideModal = document.getElementById('install-guide-modal');
 
 
 // --- Achievement Data ---
@@ -499,6 +501,10 @@ achievementsBtn.addEventListener('click', () => {
     achievementsModal.style.display = 'block';
 });
 
+installGuideBtn.addEventListener('click', () => {
+    installGuideModal.style.display = 'block';
+});
+
 statsBtn.addEventListener('click', () => {
     populateStats();
     statsModal.style.display = 'block';
@@ -508,6 +514,7 @@ closeBtns.forEach(btn => btn.addEventListener('click', () => {
     achievementsModal.style.display = 'none';
     statsModal.style.display = 'none';
     modal.style.display = 'none';
+    installGuideModal.style.display = 'none';
 }));
 
 // --- Initialization Process ---
