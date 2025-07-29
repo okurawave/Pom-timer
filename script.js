@@ -558,7 +558,7 @@ function generateHeatmap(history) {
 
             if (currentDate >= startDate && currentDate <= endDate) {
                 const count = dates[dateString] || 0;
-                const opacity = count > 0 ? 0.2 + (count / maxCount) * 0.8 : 0.1;
+                const opacity = count > 0 ? MIN_OPACITY + (count / maxCount) * OPACITY_RANGE : EMPTY_OPACITY;
                 td.style.backgroundColor = `rgba(76, 175, 80, ${opacity})`;
                 td.title = `${dateString}: ${count} pomodoros`;
             } else {
