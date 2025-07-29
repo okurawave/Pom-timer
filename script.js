@@ -551,7 +551,7 @@ function generateHeatmap(history) {
         currentDate.setDate(currentDate.getDate() - 1);
     }
 
-    for (let i = 0; i < 53; i++) { // Max 53 weeks
+    for (let i = 0; i < MAX_WEEKS; i++) { // Max 53 weeks
         const tr = document.createElement('tr');
         for (let j = 0; j < 7; j++) {
             const td = document.createElement('td');
