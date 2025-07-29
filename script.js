@@ -33,7 +33,7 @@ let isRunning = false;
 let currentMode = 'work'; // work, shortBreak, longBreak
 let workCycle = 0;
 
-// --- localStorage関連のキー ---
+// --- localStorage Keys ---
 const STATS_KEY = 'pomodoro_stats';
 const ACHIEVEMENTS_KEY = 'pomodoro_achievements';
 
