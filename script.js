@@ -132,6 +132,20 @@ function loadData() {
         resetTimer(); // データロード後にタイマーをリセットして表示に反映
     }).catch(err => {
         console.error("Error loading data from localForage", err);
+        // Fallback to default values
+        stats = stats || {};
+        userAchievements = {};
+        settings = { ...DEFAULT_SETTINGS };
+        dailyGoal = 8;
+        completedPomodoros = 0;
+
+        // Update UI with default values
+        goalInput.value = dailyGoal;
+        updateProgressDisplay();
+        resetTimer(); // Reset timer to reflect default values
+
+        // Notify the user
+        alert("Failed to load data. Default settings have been applied.");
     });
 }
 
