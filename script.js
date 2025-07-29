@@ -66,7 +66,7 @@ function switchMode() {
         updateProgressDisplay();
         saveSettings();
 
-        if (completedPomodoros == dailyGoal) {
+        if (parseInt(completedPomodoros) === parseInt(dailyGoal)) {
             celebrate();
         }
 
