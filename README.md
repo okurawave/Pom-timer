@@ -45,7 +45,7 @@
     *   「Import Git Repository」から、このリポジトリをインポートします。
 3.  **デプロイ設定**:
     *   **Framework Preset**: `Other` を選択します。
-    *   **Build and Output Settings**: ビルドコマンドは不要なので、空のままにします。
+    *   **Build and Output Settings**: ビルドコマンドは不要なので、空のままにします。また、**Output Directory** はプロジェクト構造に応じて `.` または `public` に設定してください。
     *   「Deploy」ボタンをクリックします。
 4.  **完了**: デプロイが自動的に開始され、数分で完了します。完了後、表示されたURLにアクセスして、公開されたアプリケーションを確認できます。
 
