@@ -577,8 +577,8 @@ function generateHeatmap(history) {
 function generateBarGraph(history) {
     bargraphContainer.innerHTML = '';
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const weeklyTotals = Array(7).fill(0);
-    const weeklyCounts = Array(7).fill(0);
+    const weeklyTotals = Array(DAYS_PER_WEEK).fill(0);
+    const weeklyCounts = Array(DAYS_PER_WEEK).fill(0);
 
     for (const dateStr in history) {
         const date = new Date(dateStr);
