@@ -3,6 +3,9 @@ const startStopBtn = document.getElementById('start-stop');
 const resetBtn = document.getElementById('reset');
 const modeDisplay = document.getElementById('mode');
 const cycleCountDisplay = document.getElementById('cycle-count');
+const goalInput = document.getElementById('goal-input');
+const progressDisplay = document.getElementById('progress-display');
+const confettiCanvas = document.getElementById('confetti-canvas');
 
 const WORK_TIME = 25 * 60;
 const SHORT_BREAK_TIME = 5 * 60;
@@ -13,6 +16,37 @@ let timeLeft = WORK_TIME;
 let isRunning = false;
 let currentMode = 'work'; // work, shortBreak, longBreak
 let workCycle = 0;
+let dailyGoal = 8;
+let completedPomodoros = 0;
+const notificationAudio = new Audio('notification.wav');
+
+const myConfetti = confetti.create(confettiCanvas, {
+    resize: true,
+    useWorker: true
+});
+
+function loadSettings() {
+    dailyGoal = localStorage.getItem('dailyGoal') || 8;
+    completedPomodoros = localStorage.getItem('completedPomodoros') || 0;
+    goalInput.value = dailyGoal;
+    updateProgressDisplay();
+}
+
+function saveSettings() {
+    localStorage.setItem('dailyGoal', dailyGoal);
+    localStorage.setItem('completedPomodoros', completedPomodoros);
+}
+
+function updateProgressDisplay() {
+    progressDisplay.textContent = `${completedPomodoros}/${dailyGoal}`;
+}
+
+function celebrate() {
+    myConfetti({
+        particleCount: 150,
+        spread: 180
+    });
+}
 
 function updateDisplay() {
     const minutes = Math.floor(timeLeft / 60);
@@ -28,6 +62,14 @@ function switchMode() {
 
     if (currentMode === 'work') {
         workCycle++;
+        completedPomodoros++;
+        updateProgressDisplay();
+        saveSettings();
+
+        if (completedPomodoros == dailyGoal) {
+            celebrate();
+        }
+
         cycleCountDisplay.textContent = `サイクル: ${workCycle % 4 || 4}/4`;
         if (workCycle % 4 === 0) {
             currentMode = 'longBreak';
@@ -84,10 +126,14 @@ function resetTimer() {
     } else {
         timeLeft = LONG_BREAK_TIME;
     }
-    workCycle = 0;
-    cycleCountDisplay.textContent = `サイクル: 0/4`;
     updateDisplay();
 }
+
+goalInput.addEventListener('change', () => {
+    dailyGoal = goalInput.value;
+    updateProgressDisplay();
+    saveSettings();
+});
 
 startStopBtn.addEventListener('click', () => {
     if (isRunning) {
@@ -99,7 +145,10 @@ startStopBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', resetTimer);
 
+// Load settings on page load
+loadSettings();
 updateDisplay();
+
 
 // Request notification permission on page load
 if (Notification.permission !== 'granted') {
