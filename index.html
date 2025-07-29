@@ -9,10 +9,19 @@
 <body>
     <div class="container">
         <div class="header">
-            <p id="mode">作業モード</p>
-            <p id="cycle-count">サイクル: 0/4</p>
-            <input type="text" id="task-input" placeholder="タスク名を入力">
+            <div class="left-controls">
+                <button id="theme-btn">🎨</button>
+                <button id="sound-btn">🎵</button>
+            </div>
+            <div class="center-content">
+                <p id="mode">作業モード</p>
+                <p id="cycle-count">サイクル: 0/4</p>
+            </div>
+            <div class="right-controls">
+                <button id="settings-btn">⚙️</button>
+            </div>
         </div>
+        <input type="text" id="task-input" placeholder="タスク名を入力">
         <div class="timer">
             <span id="time-display">25:00</span>
         </div>
@@ -21,6 +30,58 @@
             <button id="reset">リセット</button>
         </div>
     </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>設定</h2>
+            <div class="settings-grid">
+                <label for="work-time-input">作業時間 (分):</label>
+                <input type="number" id="work-time-input" min="1">
+                <label for="short-break-input">短い休憩 (分):</label>
+                <input type="number" id="short-break-input" min="1">
+                <label for="long-break-input">長い休憩 (分):</label>
+                <input type="number" id="long-break-input" min="1">
+                <label for="cycle-input">サイクル数:</label>
+                <input type="number" id="cycle-input" min="1">
+            </div>
+            <div class="modal-buttons">
+                <button id="save-settings">保存</button>
+                <button id="reset-defaults">初期値に戻す</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="theme-selector" class="theme-selector-panel">
+        <h3>テーマを選択</h3>
+        <button class="theme-option" data-theme="light">ライト</button>
+        <button class="theme-option" data-theme="dark">ダーク</button>
+        <button class="theme-option" data-theme="forest">森</button>
+        <button class="theme-option" data-theme="ocean">海</button>
+    </div>
+
+    <div id="sound-selector" class="sound-selector-panel">
+        <h3>アンビエントサウンド</h3>
+        <div class="sound-option" data-sound="rain">
+            <span>雨音</span>
+            <input type="range" class="volume-slider" min="0" max="1" step="0.1">
+        </div>
+        <div class="sound-option" data-sound="cafe">
+            <span>カフェ</span>
+            <input type="range" class="volume-slider" min="0" max="1" step="0.1">
+        </div>
+        <div class="sound-option" data-sound="bonfire">
+            <span>焚き火</span>
+            <input type="range" class="volume-slider" min="0" max="1" step="0.1">
+        </div>
+        <button id="stop-sound-btn">サウンド停止</button>
+    </div>
+
+    <audio id="rain-sound" src="https://example.com/audio/rain.mp3" loop></audio>
+    <audio id="cafe-sound" src="https://example.com/audio/cafe.mp3" loop></audio>
+    <audio id="bonfire-sound" src="https://example.com/audio/bonfire.mp3" loop></audio>
+
+
     <script src="script.js"></script>
 </body>
 </html>
