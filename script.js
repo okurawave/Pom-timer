@@ -4,6 +4,25 @@ const startStopBtn = document.getElementById('start-stop');
 const resetBtn = document.getElementById('reset');
 const modeDisplay = document.getElementById('mode');
 const cycleCountDisplay = document.getElementById('cycle-count');
+const progressCircle = document.querySelector('.progress-ring__circle');
+let radius, circumference;
+if (progressCircle) {
+    radius = progressCircle.r.baseVal.value;
+    circumference = radius * 2 * Math.PI;
+    progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+    progressCircle.style.strokeDashoffset = circumference;
+} else {
+    console.warn('Progress circle element not found. Skipping related functionality.');
+}
+
+function setProgress(percent) {
+  if (progressCircle) {
+      const offset = circumference - percent / 100 * circumference;
+      progressCircle.style.strokeDashoffset = offset;
+  } else {
+      console.warn('Cannot set progress: Progress circle element is not available.');
+  }
+}
 
 const notificationAudio = new Audio('notification.wav');
 const achievementsBtn = document.getElementById('achievements-btn');
@@ -142,6 +161,17 @@ function updateDisplay() {
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     timeDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    let totalTime;
+    if (currentMode === 'work') {
+        totalTime = WORK_TIME;
+    } else if (currentMode === 'shortBreak') {
+        totalTime = SHORT_BREAK_TIME;
+    } else {
+        totalTime = LONG_BREAK_TIME;
+    }
+    const percent = ((totalTime - timeLeft) / totalTime) * 100;
+    setProgress(percent);
 }
 
 // --- Timer Logic ---
