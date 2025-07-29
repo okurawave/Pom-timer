@@ -254,7 +254,7 @@ startStopBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', resetTimer);
 
-// --- モーダル制御 ---
+// --- Modal Control ---
 achievementsBtn.addEventListener('click', () => {
     populateAchievementsGrid();
     achievementsModal.style.display = 'block';
