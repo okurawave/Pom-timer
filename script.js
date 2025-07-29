@@ -214,7 +214,7 @@ function loadSoundSettings() {
         if (savedVolume) {
             option.querySelector('.volume-slider').value = savedVolume;
         } else {
-             option.querySelector('.volume-slider').value = 0.5;
+            option.querySelector('.volume-slider').value = 0.5;
         }
     });
 }
