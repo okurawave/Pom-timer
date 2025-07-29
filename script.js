@@ -26,8 +26,8 @@ const myConfetti = confetti.create(confettiCanvas, {
 });
 
 function loadSettings() {
-    dailyGoal = localStorage.getItem('dailyGoal') || 8;
-    completedPomodoros = localStorage.getItem('completedPomodoros') || 0;
+    dailyGoal = parseInt(localStorage.getItem('dailyGoal')) || 8;
+    completedPomodoros = parseInt(localStorage.getItem('completedPomodoros')) || 0;
     goalInput.value = dailyGoal;
     updateProgressDisplay();
 }
