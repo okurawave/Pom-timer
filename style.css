@@ -42,7 +42,6 @@ body {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    width: 80%;
     order: 3;
     width: 100%; /* Full width */
 }
