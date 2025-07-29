@@ -4,15 +4,23 @@ const resetBtn = document.getElementById('reset');
 const modeDisplay = document.getElementById('mode');
 const cycleCountDisplay = document.getElementById('cycle-count');
 const progressCircle = document.querySelector('.progress-ring__circle');
-const radius = progressCircle.r.baseVal.value;
-const circumference = radius * 2 * Math.PI;
-
-progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
-progressCircle.style.strokeDashoffset = circumference;
+let radius, circumference;
+if (progressCircle) {
+    radius = progressCircle.r.baseVal.value;
+    circumference = radius * 2 * Math.PI;
+    progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+    progressCircle.style.strokeDashoffset = circumference;
+} else {
+    console.warn('Progress circle element not found. Skipping related functionality.');
+}
 
 function setProgress(percent) {
-  const offset = circumference - percent / 100 * circumference;
-  progressCircle.style.strokeDashoffset = offset;
+  if (progressCircle) {
+      const offset = circumference - percent / 100 * circumference;
+      progressCircle.style.strokeDashoffset = offset;
+  } else {
+      console.warn('Cannot set progress: Progress circle element is not available.');
+  }
 }
 
 const WORK_TIME = 25 * 60;
