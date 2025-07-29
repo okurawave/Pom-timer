@@ -241,3 +241,22 @@ body.ocean .container {
 body.ocean #start-stop { background-color: #16a085; }
 body.ocean #reset { background-color: #e74c3c; }
 
+/* Stats Modal Styles */
+#heatmap-container table {
+    border-collapse: collapse;
+    margin: 20px auto;
+}
+
+#heatmap-container td {
+    width: 15px;
+    height: 15px;
+    border: 1px solid #fff;
+}
+
+#bargraph-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 150px;
+    margin-top: 20px;
+}
