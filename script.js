@@ -296,13 +296,12 @@ function checkAchievements() {
     // Weekly check (Monday as start of week)
     if (!userAchievements['weekly_goal_achiever']) {
         let weeklyCount = 0;
-        const todayDate = new Date();
-        const dayOfWeek = todayDate.getDay(); // 0-6 (Sun-Sat)
-        const startOfWeek = new Date(todayDate);
-        startOfWeek.setDate(todayDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Adjust to Monday
+        const dayOfWeek = now.getDay(); // 0-6 (Sun-Sat)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Adjust to Monday
         startOfWeek.setHours(0, 0, 0, 0);
 
-        for (let d = new Date(startOfWeek); d <= todayDate; d.setDate(d.getDate() + 1)) {
+        for (let d = new Date(startOfWeek); d <= now; d.setDate(d.getDate() + 1)) {
             const dateStr = d.toISOString().split('T')[0];
             weeklyCount += history[dateStr] || 0;
         }
