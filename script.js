@@ -544,9 +544,10 @@ function generateHeatmap(history) {
     const tbody = document.createElement('tbody');
     table.appendChild(tbody);
 
+    const SUNDAY = 0;
     let currentDate = new Date(startDate);
     // Adjust to start the week on Sunday
-    while (currentDate.getDay() !== 0) {
+    while (currentDate.getDay() !== SUNDAY) {
         currentDate.setDate(currentDate.getDate() - 1);
     }
 
