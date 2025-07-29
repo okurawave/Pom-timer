@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pom-timer</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <div class="container">
@@ -20,8 +21,29 @@
             <div class="right-controls">
                 <button id="achievements-btn">🏆</button>
                 <button id="settings-btn">⚙️</button>
+        <button id="install-guide-btn">💡</button>
             </div>
         </div>
+
+<!-- Install Guide Modal -->
+<div id="install-guide-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>インストール方法</h2>
+        <p>このアプリはホーム画面に追加して、オフラインでも使用できます。</p>
+        <h4>PC (Chrome/Edge)</h4>
+        <ol>
+            <li>アドレスバーの右側にあるインストールアイコンをクリックします。</li>
+            <li>「インストール」を選択します。</li>
+        </ol>
+        <h4>スマートフォン (iOS/Android)</h4>
+        <ol>
+            <li>ブラウザの共有メニューを開きます。</li>
+            <li>「ホーム画面に追加」を選択します。</li>
+        </ol>
+    </div>
+</div>
+
         <div class="daily-goal">
             <label for="goal-input">今日の目標:</label>
             <input type="number" id="goal-input" min="1" value="8">
@@ -105,7 +127,19 @@
     <audio id="cafe-sound" src="https://example.com/audio/cafe.mp3" loop></audio>
     <audio id="bonfire-sound" src="https://example.com/audio/bonfire.mp3" loop></audio>
 
-
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
 
     <script src="script.js"></script>
 </body>
