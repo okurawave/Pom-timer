@@ -21,8 +21,7 @@ function updateDisplay() {
 }
 
 function switchMode() {
-    const audio = new Audio('notification.wav');
-    audio.play();
+    notificationAudio.play();
 
     let notificationTitle;
     let notificationBody;
