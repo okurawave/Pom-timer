@@ -74,7 +74,7 @@
     </div>
 
     <canvas id="confetti-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script src="confetti.browser.min.js"></script>
 
 
     <div id="settings-modal" class="modal">
@@ -123,24 +123,26 @@
         <button id="stop-sound-btn">サウンド停止</button>
     </div>
 
-    <audio id="rain-sound" src="https://example.com/audio/rain.mp3" loop></audio>
-    <audio id="cafe-sound" src="https://example.com/audio/cafe.mp3" loop></audio>
-    <audio id="bonfire-sound" src="https://example.com/audio/bonfire.mp3" loop></audio>
+    <audio id="rain-sound" src="rain.mp3" loop></audio>
+    <audio id="cafe-sound" src="cafe.mp3" loop></audio>
+    <audio id="bonfire-sound" src="bonfire.mp3" loop></audio>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                        // console.log('ServiceWorker registration successful with scope: ', registration.scope);
                     })
                     .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
+                        // console.log('ServiceWorker registration failed: ', err);
                     });
             });
         }
     </script>
 
+    <div id="toast-container"></div>
+    <script src="localforage.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
